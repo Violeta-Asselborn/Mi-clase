@@ -13,7 +13,6 @@ Los nombres de las clases para cada funcionalidad son los siguientes:
   -RegresionLineal: Para aplicar regresión lineal simple y múltiple
   -RegresionLogistica: Para aplicar regresión logística 
 
-  holaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 """
 
 
@@ -74,16 +73,16 @@ class AnalisisDescriptivo:
 
   #Núcleos
   def kernel_gaussiano(self, u):
-    return (1 / np.sqrt(2 * np.pi)) * np.exp(-0.5 * u ** 2)
+    return (1 / np.sqrt(2 * np.pi)) * np.e**(-1/2 * u**2)
 
   def kernel_uniforme(self, u):
-    return (np.abs(u) <= 0.5)
+    return (u > -1/2) & (u <= 1/2)
 
   def cuadratico(self, u):
-    return (3 / 4) * (1 - u ** 2) * ((np.abs(u) <= 1))
+    return (3 / 4) * (1 - u ** 2) * ((u >= -1) & (u <= 1))
 
   def triangular(self, u):
-    return ((1 - np.abs(u)) * (np.abs(u) <= 1))
+    return ((1 + u) * ((u >= -1) & (u < 0))) + ((1 - u) * ((u >= 0) & (u <= 1)))
 
   def densidad_nucleo(self, h, nucleo):
     """
@@ -113,7 +112,7 @@ class AnalisisDescriptivo:
       else:
         valores_nucleo = self.cuadratico(u)
 
-      densidad[i] = np.mean(valores_nucleo) / h
+      densidad[i] = np.sum(valores_nucleo) / (len(self.datos) * h)
       return densidad 
 
   #Cuanto más bajo, mejor es la estimación
@@ -141,8 +140,8 @@ class AnalisisDescriptivo:
     #Ordenando los datos estandarizados
     cuantiles_muestrales = np.sort(cuantiles_muestrales)
     #Generando los cuantiles teóricos de la normal estándar
-    self.n = len(self.datos)
-    p = (np.arange(1, self.n + 1) -0.5)/ self.n
+    n = len(self.datos)
+    p = (np.arange(1, n + 1) -0.5)/ n
     cuantiles_teoricos = norm.ppf(p)
     #Graficando los cuantiles muestrales versus los cuantiles teóricos
     plt.scatter(cuantiles_teoricos, cuantiles_muestrales, color='blue', marker='o')
@@ -495,6 +494,10 @@ class RegresionLogistica(Regresion):
     new_x_const = sm.add_constant(new_x)
     resultados = self.ajustar_modelo()
     return resultados.predict(new_x_const)
+  
+  def predecir_clases(self, new_x, umbral=0.5):
+    probabilidades = self.predecir_probabilidades(new_x)
+    return (probabilidades >= umbral).astype(int)
 
   def evaluar_desempenio(self, x_test, y_test, umbral=0.5):
     """
